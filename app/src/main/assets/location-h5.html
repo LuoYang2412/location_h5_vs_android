@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+            http-equiv="refresh"
+            name="viewport"
+            content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=0"
+    />
+    <title>定位测试H5</title>
+    <script
+            type="text/javascript"
+            src="https://api.tianditu.gov.cn/api?v=4.0&tk=8daa2c2e245d6a84234ab7c48b1ad121"
+    ></script>
+    <style>
+      body,
+      html {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        font-family: "Microsoft YaHei";
+      }
+
+      #mapDiv {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 0;
+      }
+
+      #actionDiv {
+        position: absolute;
+      }
+
+      #infoDiv {
+        position: absolute;
+        background: wheat;
+        width: 100%;
+        height: min-content;
+        min-height: 50px;
+        bottom: 0;
+      }
+    </style>
+</head>
+<body onLoad="onLoad()">
+<div id="mapDiv"></div>
+<div id="actionDiv">
+    <button onclick="getLocationOfH5()">获取位置H5</button>
+    <button onclick="getLocationOfNav()">获取位置APP</button>
+</div>
+<div id="infoDiv" onclick="clearWatch()">
+    定位信息展示在这里,点击这里取消位置监听<br />精度,纬度,经纬精确度(米)
+</div>
+</body>
+<script>
+    let map;
+    let zoom = 16;
+    let watchID;
+
+    function onLoad() {
+      map = new T.Map("mapDiv");
+      map.centerAndZoom(new T.LngLat(106.641411, 26.62596), zoom);
+    }
+
+    function addPositionMark(position) {
+      map.clearOverLays();
+      //创建标注对象
+      let marker = new T.Marker(new T.LngLat(position[0], position[1]));
+      //向地图上添加标注
+      map.addOverLay(marker);
+    }
+
+    function getLocationOfH5() {
+      watchPosition();
+    }
+
+    //清除位置观察
+    function clearWatch() {
+      navigator.geolocation.clearWatch(watchID);
+      try {
+        NavLocation.clearWatch();
+      } catch (e) {
+        console.log(e);
+      }
+      document.getElementById("infoDiv").innerText =
+        "定位信息展示在这里,点击这里取消位置监听\n精度,纬度,经纬精确度(米)";
+      map.clearOverLays();
+    }
+
+    //位置观察
+    function watchPosition() {
+      this.clearWatch();
+      if ("geolocation" in navigator) {
+        /* 地理位置服务可用 */
+        watchID = navigator.geolocation.watchPosition(
+          (position) => {
+            let location = [
+              position.coords.longitude,
+              position.coords.latitude,
+              position.coords.accuracy,
+            ];
+            document.getElementById("infoDiv").innerText = location;
+            addPositionMark(location);
+          },
+          (error) => {
+            let msg = "获取地理位置超时";
+            switch (error.code) {
+              case 1:
+                msg = "没有获取地理位置信息的权限";
+                break;
+              case 2:
+                msg = "获取地理位置出错";
+                break;
+            }
+            document.getElementById("infoDiv").innerText = msg;
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 1000 * 30,
+          }
+        );
+      } else {
+        document.getElementById("infoDiv").innerText = "地理位置服务不可用";
+      }
+    }
+
+    function getLocationOfNav() {
+      try {
+        NavLocation.watchPosition();
+      } catch (e) {
+        console.log(e);
+      }
+    }
+
+    function getLocationOfNavResult(data) {
+      document.getElementById("infoDiv").innerText = data;
+      addPositionMark(data);
+    }
+  </script>
+</html>
